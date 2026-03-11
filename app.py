@@ -1,6 +1,5 @@
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, flash
-import datetime
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_carpool_key'
@@ -131,4 +130,4 @@ def cancel_ride(id):
     return redirect(url_for('ride_detail', id=id))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
