@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="detail-wrap">
+
+    <a class="back-btn" href="{{ url_for('index') }}">← Back to rides</a>
+
+    <!-- Main ride card -->
+    <div class="detail-card">
+      <div class="detail-header">
+        <div class="detail-route">
+          <div class="detail-city">{{ ride['source'] }}</div>
+          <div class="detail-arrow">
+            <div class="arrow-line"></div>
+            <span>→</span>
+          </div>
+          <div class="detail-city dest">{{ ride['destination'] }}</div>
+        </div>
+        <div class="detail-meta-row">
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">Date</span>
+            <span class="detail-meta-val">{{ ride['date'] }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">Time</span>
+            <span class="detail-meta-val">{{ ride['time'] }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="detail-meta-label">Status</span>
+            {% if ride['is_active'] %}
+                <span class="status-badge active">● Active</span>
+            {% else %}
+                <span class="status-badge closed">● Closed</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-body">
+        <div class="detail-grid">
+          <div class="info-block">
+            <div class="info-block-label">Seats Originally Posted</div>
+            <div class="info-block-val seats">{{ ride['seats_available'] }}</div>
+            <div class="seats-note">Seat count is as originally posted. Contact driver to confirm availability.</div>
+          </div>
+          
+          {% if ride['is_active'] %}
+          <div class="info-block" style="display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div class="info-block-label">Manage Ride</div>
+              <div style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">Are all seats taken or trip cancelled? Verify contact to close.</div>
+            </div>
+            <form action="{{ url_for('cancel_ride', id=ride['id']) }}" method="post" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto;">
+                <input type="text" name="driver_contact" required placeholder="Driver contact info..." style="flex:1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; font-family: inherit;">
+                <button type="submit" class="close-ride-btn" style="flex: 1;">Mark Full / Cancelled</button>
+            </form>
+          </div>
+          {% endif %}
+          
+          <div class="driver-card">
+            {% set initials = (ride['driver_name'].split(' ')[0][0] ~ (ride['driver_name'].split(' ')[1][0] if ride['driver_name'].split(' ')|length > 1 else '')) | upper %}
+            <div class="driver-avatar-lg av-{{ (ride['id'] % 5) + 1 }}">{{ initials }}</div>
+            <div class="driver-details">
+              <strong>{{ ride['driver_name'] }}</strong>
+              <span>Driver</span>
+            </div>
+            <div class="contact-chip">📞 {{ ride['contact'] }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Request a Seat -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <div class="section-card-title">Request a Seat 🎟️</div>
+      </div>
+      <div class="section-card-body">
+        {% if ride['is_active'] %}
+            <div class="privacy-notice">
+            ⚠️ <span>Your name and contact will be visible to anyone who views this page. Only share info you're comfortable making public.</span>
+            </div>
+            <form action="{{ url_for('request_seat', id=ride['id']) }}" method="post">
+                <div class="form-grid" style="margin-bottom:1rem;">
+                <div class="form-group">
+                    <label>Your Name <span style="color:var(--terra)">*</span></label>
+                    <input type="text" class="form-control" name="passenger_name" placeholder="Passenger name" required />
+                </div>
+                <div class="form-group">
+                    <label>Your Contact <span style="color:var(--terra)">*</span></label>
+                    <input type="text" class="form-control" name="passenger_contact" placeholder="Phone or email" required />
+                </div>
+                </div>
+                <button type="submit" class="submit-btn" style="width: auto; padding: 12px 24px;">Send Seat Request</button>
+            </form>
+        {% else %}
+            <div class="privacy-notice" style="background:#f1f5f9; border-color:#cbd5e1; color:#334155;">
+                🔒 <span>This ride is no longer active and is not accepting new requests.</span>
+            </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Requests List -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <div class="section-card-title">Seat Requests</div>
+        <span class="status-badge active">{{ requests|length }} requests</span>
+      </div>
+      <div class="section-card-body" style="padding: 0 1.5rem 1.5rem;">
+        {% if requests %}
+            {% for req in requests %}
+                {% set rinit = (req['passenger_name'].split(' ')[0][0] ~ (req['passenger_name'].split(' ')[1][0] if req['passenger_name'].split(' ')|length > 1 else '')) | upper %}
+                <div class="request-item">
+                    <div class="req-avatar">{{ rinit }}</div>
+                    <div class="req-info">
+                    <div class="req-name">{{ req['passenger_name'] }}</div>
+                    <div class="req-contact">{{ req['passenger_contact'] }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align:center; padding:1.5rem; color:var(--muted); font-size:0.9rem;">No requests yet. Be the first to request a seat!</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+{% endblock %}

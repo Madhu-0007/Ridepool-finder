@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RideShare — Car Pool Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<nav>
+    <a href="{{ url_for('index') }}" class="logo">
+        <div class="logo-icon">🚗</div>
+        <span class="logo-text">Ride<span>Pool</span></span>
+    </a>
+    <div class="nav-links">
+        <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Find a Ride</a>
+        <a href="{{ url_for('post_ride') }}" class="nav-link {% if request.endpoint == 'post_ride' %}active{% endif %}">Post a Ride</a>
+    </div>
+</nav>
+
+<!-- Hidden div to hold flash messages for JS to read -->
+<div id="flash-data" style="display: none;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            [
+            {% for category, message in messages %}
+                {"category": "{{ category }}", "message": "{{ message|replace('"', '\\"') }}"}{{ "," if not loop.last }}
+            {% endfor %}
+            ]
+        {% endif %}
+    {% endwith %}
+</div>
+
+{% block hero %}{% endblock %}
+
+{% block content %}{% endblock %}
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon">✅</span>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const flashDataEl = document.getElementById("flash-data");
+        if (flashDataEl && flashDataEl.textContent.trim().length > 0) {
+            try {
+                const messages = JSON.parse(flashDataEl.textContent.trim());
+                messages.forEach((msg, index) => {
+                    setTimeout(() => {
+                        let icon = 'ℹ️';
+                        if (msg.category === 'success') icon = '✅';
+                        if (msg.category === 'error' || msg.category === 'danger') icon = '⚠️';
+                        showToast(icon, msg.message);
+                    }, index * 400); // Stagger animations
+                });
+            } catch (e) {
+                console.error("Error parsing flash messages", e);
+            }
+        }
+    });
+
+    function showToast(icon, msg) {
+        const t = document.getElementById('toast');
+        document.getElementById('toast-icon').textContent = icon;
+        document.getElementById('toast-msg').textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3200);
+    }
+</script>
+
+</body>
+</html>

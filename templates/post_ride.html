@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-hero">
+  <h2>Post a Ride 🚘</h2>
+  <p>Fill in your journey details and let passengers find you</p>
+</div>
+
+<div style="background: var(--navy); padding-bottom: 3rem;"></div>
+
+<div class="form-container">
+  <form action="{{ url_for('post_ride') }}" method="post" class="form-grid">
+
+    <div class="route-form-row">
+      <div class="form-group">
+        <label>From <span>*</span></label>
+        <input type="text" name="source" class="form-control" placeholder="Departure city" required />
+      </div>
+      <div class="route-swap-btn" title="Swap" tabindex="-1">⇄</div>
+      <div class="form-group">
+        <label>To <span>*</span></label>
+        <input type="text" name="destination" class="form-control" placeholder="Destination city" required />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Your Name <span>*</span></label>
+      <input type="text" name="driver_name" class="form-control" placeholder="Driver's name" required />
+    </div>
+
+    <div class="form-group">
+      <label>Contact Info <span>*</span></label>
+      <input type="text" name="contact" class="form-control" placeholder="Phone or email" required />
+      <div class="form-hint">Passengers will use this to reach you</div>
+    </div>
+
+    <div class="form-group">
+      <label>Date <span>*</span></label>
+      <input type="date" name="date" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+      <label>Departure Time <span>*</span></label>
+      <input type="time" name="time" class="form-control" required />
+    </div>
+
+    <div class="form-group full">
+      <label>Seats Available <span>*</span></label>
+      <input type="number" name="seats_available" class="form-control" placeholder="e.g. 3" min="1" max="8" required />
+      <div class="form-hint">Max 8 seats. This is a one-time declaration — manage requests manually.</div>
+    </div>
+
+    <div class="form-group full">
+      <button type="submit" class="submit-btn amber">
+        ✅ Post My Ride
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
