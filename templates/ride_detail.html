@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="detail-wrap">
+<div class="detail-wrap page-enter">
 
     <a class="back-btn" href="{{ url_for('index') }}">← Back to rides</a>
 
     <!-- Main ride card -->
-    <div class="detail-card">
+    <div class="detail-card fade-up">
       <div class="detail-header">
         <div class="detail-route">
           <div class="detail-city">{{ ride['source'] }}</div>
@@ -47,11 +47,12 @@
           <div class="info-block" style="display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <div class="info-block-label">Manage Ride</div>
-              <div style="font-size:0.82rem; color:var(--muted); margin-bottom:12px;">Are all seats taken or trip cancelled? Verify contact to close.</div>
+              <div style="font-size:0.82rem; color:var(--muted); margin-bottom:8px;">Only the driver who created this ride can cancel it.</div>
             </div>
-            <form action="{{ url_for('cancel_ride', id=ride['id']) }}" method="post" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto;">
-                <input type="text" name="driver_contact" required placeholder="Driver contact info..." style="flex:1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; font-family: inherit;">
-                <button type="submit" class="close-ride-btn" style="flex: 1;">Mark Full / Cancelled</button>
+            <button type="button" class="close-ride-btn" id="toggle-cancel-btn" onclick="document.getElementById('cancel-form').style.display='flex'; this.style.display='none';" style="margin-bottom: 8px;">🔒 I'm the Driver — Cancel This Ride</button>
+            <form id="cancel-form" action="{{ url_for('cancel_ride', id=ride['id']) }}" method="post" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: auto;">
+                <input type="password" name="cancel_password" required placeholder="Enter your cancel password..." style="flex:1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; font-family: inherit;">
+                <button type="submit" class="close-ride-btn" style="flex: 1;">Confirm Cancel</button>
             </form>
           </div>
           {% endif %}
@@ -70,14 +71,14 @@
     </div>
 
     <!-- Request a Seat -->
-    <div class="section-card">
+    <div class="section-card fade-up" style="animation-delay: 0.1s;">
       <div class="section-card-header">
         <div class="section-card-title">Request a Seat 🎟️</div>
       </div>
       <div class="section-card-body">
         {% if ride['is_active'] %}
             <div class="privacy-notice">
-            ⚠️ <span>Your name and contact will be visible to anyone who views this page. Only share info you're comfortable making public.</span>
+            ℹ️ <span>Your request will only be visible to the driver. They will contact you if a seat is available.</span>
             </div>
             <form action="{{ url_for('request_seat', id=ride['id']) }}" method="post">
                 <div class="form-grid" style="margin-bottom:1rem;">
@@ -100,29 +101,80 @@
       </div>
     </div>
 
-    <!-- Requests List -->
-    <div class="section-card">
+    <!-- Requests List (Driver Only) -->
+    <div class="section-card fade-up" style="animation-delay: 0.2s;">
       <div class="section-card-header">
-        <div class="section-card-title">Seat Requests</div>
-        <span class="status-badge active">{{ requests|length }} requests</span>
+        <div class="section-card-title">🔒 Seat Requests (Driver Only)</div>
+        <span class="status-badge active">{{ request_count }} request{{ 's' if request_count != 1 }}</span>
       </div>
-      <div class="section-card-body" style="padding: 0 1.5rem 1.5rem;">
-        {% if requests %}
-            {% for req in requests %}
-                {% set rinit = (req['passenger_name'].split(' ')[0][0] ~ (req['passenger_name'].split(' ')[1][0] if req['passenger_name'].split(' ')|length > 1 else '')) | upper %}
-                <div class="request-item">
-                    <div class="req-avatar">{{ rinit }}</div>
-                    <div class="req-info">
-                    <div class="req-name">{{ req['passenger_name'] }}</div>
-                    <div class="req-contact">{{ req['passenger_contact'] }}</div>
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div style="text-align:center; padding:1.5rem; color:var(--muted); font-size:0.9rem;">No requests yet. Be the first to request a seat!</div>
-        {% endif %}
+      <div class="section-card-body">
+        <div class="privacy-notice" style="background:#EFF6FF; border-color:#BFDBFE; color:#1E40AF;">
+          🛡️ <span>Requests are private. Only the driver can view them by entering their cancel password.</span>
+        </div>
+
+        <div id="requests-locked">
+          <form id="view-requests-form" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <input type="password" id="view-requests-pwd" required placeholder="Enter your cancel password..." style="flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:10px; font-size:0.88rem; font-family:inherit; background:var(--cream); transition: border-color 0.2s;">
+            <button type="submit" class="submit-btn" style="width:auto; padding:10px 20px; margin-top:0;">🔓 View Requests</button>
+          </form>
+          <div id="view-requests-error" style="display:none; color:#DC2626; font-size:0.82rem; margin-top:8px; font-weight:500;">⚠️ Incorrect password. Please try again.</div>
+        </div>
+
+        <div id="requests-unlocked" style="display:none; padding:0;">
+          <div id="requests-list"></div>
+        </div>
       </div>
     </div>
 
-  </div>
+</div>
+
+<script>
+document.getElementById('view-requests-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const pwd = document.getElementById('view-requests-pwd').value;
+    const errorEl = document.getElementById('view-requests-error');
+    errorEl.style.display = 'none';
+
+    try {
+        const formData = new FormData();
+        formData.append('cancel_password', pwd);
+
+        const res = await fetch('{{ url_for("view_requests", id=ride["id"]) }}', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById('requests-locked').style.display = 'none';
+            const unlockedEl = document.getElementById('requests-unlocked');
+            unlockedEl.style.display = 'block';
+
+            const listEl = document.getElementById('requests-list');
+
+            if (data.requests.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; padding:1.5rem; color:var(--muted); font-size:0.9rem;">No requests yet. Share the link so passengers can find your ride!</div>';
+            } else {
+                listEl.innerHTML = data.requests.map(req => {
+                    const parts = req.passenger_name.split(' ');
+                    const initial = (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+                    return `<div class="request-item fade-up">
+                        <div class="req-avatar">${initial}</div>
+                        <div class="req-info">
+                            <div class="req-name">${req.passenger_name}</div>
+                            <div class="req-contact">${req.passenger_contact}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+        } else {
+            errorEl.style.display = 'block';
+        }
+    } catch (err) {
+        errorEl.textContent = '⚠️ Something went wrong. Please try again.';
+        errorEl.style.display = 'block';
+    }
+});
+</script>
 {% endblock %}
