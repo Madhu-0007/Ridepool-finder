@@ -21,6 +21,7 @@ def init_db():
             time TEXT NOT NULL,
             seats_available INTEGER NOT NULL,
             contact TEXT NOT NULL,
+            cancel_password TEXT NOT NULL,
             is_active INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
