@@ -1,5 +1,5 @@
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_carpool_key'
@@ -30,29 +30,10 @@ def index():
     query += " ORDER BY date ASC, time ASC"
     rides = conn.execute(query, params).fetchall()
     
-    # 2. Compute Stats
-    # Active rides
-    active_count = len(rides) if source or destination else conn.execute("SELECT COUNT(*) FROM rides WHERE is_active = 1 AND date >= date('now')").fetchone()[0]
-    
-    # Unique cities (combining source logic)
-    # We will just fetch all active sources/destinations to be accurate for stats regardless of search
-    all_active_rides = conn.execute("SELECT source, destination, seats_available FROM rides WHERE is_active = 1 AND date >= date('now')").fetchall()
-    cities = set()
-    total_seats = 0
-    for r in all_active_rides:
-        cities.add(r['source'].strip().title())
-        cities.add(r['destination'].strip().title())
-        total_seats += r['seats_available']
-        
-    cities_count = len(cities)
-
-    conn.close()
-    
     return render_template('index.html', 
                            rides=rides, 
                            source=source, 
-                           destination=destination,
-                           stats={'active_rides': active_count, 'cities': cities_count, 'seats': total_seats})
+                           destination=destination)
 
 @app.route('/post', methods=('GET', 'POST'))
 def post_ride():
@@ -64,12 +45,13 @@ def post_ride():
         date = request.form['date']
         time = request.form['time']
         seats_available = request.form['seats_available']
+        cancel_password = request.form['cancel_password']
 
         conn = get_db_connection()
         conn.execute('''
-            INSERT INTO rides (driver_name, source, destination, date, time, seats_available, contact, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-        ''', (driver_name, source, destination, date, time, seats_available, contact))
+            INSERT INTO rides (driver_name, source, destination, date, time, seats_available, contact, cancel_password, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+        ''', (driver_name, source, destination, date, time, seats_available, contact, cancel_password))
         conn.commit()
         conn.close()
         
@@ -87,10 +69,25 @@ def ride_detail(id):
         conn.close()
         return "Ride not found", 404
 
-    requests = conn.execute('SELECT * FROM requests WHERE ride_id = ?', (id,)).fetchall()
+    request_count = conn.execute('SELECT COUNT(*) as cnt FROM requests WHERE ride_id = ?', (id,)).fetchone()['cnt']
     conn.close()
     
-    return render_template('ride_detail.html', ride=ride, requests=requests)
+    return render_template('ride_detail.html', ride=ride, request_count=request_count)
+
+@app.route('/ride/<int:id>/view-requests', methods=('POST',))
+def view_requests(id):
+    password_input = request.form.get('cancel_password', '').strip()
+    
+    conn = get_db_connection()
+    ride = conn.execute('SELECT cancel_password FROM rides WHERE id = ?', (id,)).fetchone()
+    
+    if ride and ride['cancel_password'] == password_input:
+        reqs = conn.execute('SELECT passenger_name, passenger_contact FROM requests WHERE ride_id = ?', (id,)).fetchall()
+        conn.close()
+        return jsonify({'success': True, 'requests': [dict(r) for r in reqs]})
+    
+    conn.close()
+    return jsonify({'success': False, 'message': 'Incorrect password'}), 403
 
 @app.route('/ride/<int:id>/request', methods=('POST',))
 def request_seat(id):
@@ -114,17 +111,17 @@ def request_seat(id):
 
 @app.route('/ride/<int:id>/cancel', methods=('POST',))
 def cancel_ride(id):
-    driver_contact_input = request.form.get('driver_contact', '').strip()
+    password_input = request.form.get('cancel_password', '').strip()
     
     conn = get_db_connection()
-    ride = conn.execute('SELECT contact FROM rides WHERE id = ?', (id,)).fetchone()
+    ride = conn.execute('SELECT cancel_password FROM rides WHERE id = ?', (id,)).fetchone()
     
-    if ride and ride['contact'] == driver_contact_input:
+    if ride and ride['cancel_password'] == password_input:
         conn.execute('UPDATE rides SET is_active = 0 WHERE id = ?', (id,))
         conn.commit()
         flash('Ride has been marked as Full/Cancelled.', 'success')
     else:
-        flash('Incorrect driver contact. You cannot cancel this ride.', 'error')
+        flash('Incorrect password. Only the ride creator can cancel this ride.', 'error')
         
     conn.close()
     return redirect(url_for('ride_detail', id=id))
