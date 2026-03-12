@@ -11,30 +11,54 @@
       <label>From</label>
       <input type="text" name="source" placeholder="e.g. Mumbai" value="{{ source }}">
     </div>
+
     <div class="search-divider"></div>
+
     <div class="search-field">
       <label>To</label>
       <input type="text" name="destination" placeholder="e.g. Pune" value="{{ destination }}">
     </div>
+
     <button type="submit" class="search-btn">
       🔍 Search
     </button>
   </form>
+  <div class="moving-car-container">
+    <div class="moving-car">
+      <!-- High-quality SVG Car -->
+      <svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg" class="car-svg">
+        <path d="M10,30 L85,30 C88,30 90,28 90,25 L90,18 C90,15 88,14 85,13 L65,13 L55,5 C52,2 48,2 45,2 L25,2 C22,2 20,4 20,7 L15,13 L10,13 C7,13 5,15 5,18 L5,25 C5,28 7,30 10,30 Z" fill="#E86B4F" stroke="#1C2B3A" stroke-width="1.5" stroke-linejoin="round"/>
+        <!-- Windows -->
+        <path d="M22,13 L43,13 L43,5 L26,5 Z" fill="#1C2B3A" />
+        <path d="M46,13 L62,13 L54,5 L46,5 Z" fill="#1C2B3A" />
+        <!-- Wheels -->
+        <circle cx="22" cy="30" r="5" fill="#1C2B3A" />
+        <circle cx="22" cy="30" r="2.5" fill="#FAF7F2" />
+        <circle cx="73" cy="30" r="5" fill="#1C2B3A" />
+        <circle cx="73" cy="30" r="2.5" fill="#FAF7F2" />
+        <!-- Headlight -->
+        <path d="M88,16 L90,16 L90,20 L88,20 Z" fill="#F5A623" />
+        <!-- Tail light -->
+        <path d="M5,16 L7,16 L7,20 L5,20 Z" fill="#FF0000" />
+      </svg>
+      <!-- Exhaust Fumes -->
+      <div class="exhaust"></div>
+      <div class="exhaust exhaust2"></div>
+    </div>
+    <div class="road-line"></div>
+  </div>
 </div>
-
-{% if not source and not destination and stats['active_rides'] > 0 %}
-<div class="stats-bar">
-  <div class="stat"><div class="stat-num">{{ stats['active_rides'] }}</div><div class="stat-label">Active Rides</div></div>
-  <div class="stat"><div class="stat-num">{{ stats['cities'] }}</div><div class="stat-label">Cities</div></div>
-  <div class="stat"><div class="stat-num">{{ stats['seats'] }}</div><div class="stat-label">Seats Shared</div></div>
-</div>
-{% endif %}
 {% endblock %}
+
 
 {% block content %}
 <div class="main">
+
   <div class="section-header">
-    <div class="section-title">Available Rides <span>({{ rides|length }})</span></div>
+    <div class="section-title">
+      Available Rides <span>({{ rides|length }})</span>
+    </div>
+
     <div class="filter-pills">
       {% if source or destination %}
       <a href="{{ url_for('index') }}" class="pill active">Clear Search Filter</a>
@@ -42,51 +66,83 @@
     </div>
   </div>
 
+
   <div class="rides-grid">
+
     {% if rides %}
+
         {% for ride in rides %}
+
             {% set initials = (ride['driver_name'].split(' ')[0][0] ~ (ride['driver_name'].split(' ')[1][0] if ride['driver_name'].split(' ')|length > 1 else '')) | upper %}
+
             <a href="{{ url_for('ride_detail', id=ride['id']) }}" class="ride-card">
+
               <div class="card-header">
+
                 <div class="driver-info">
                   <div class="avatar av-{{ (ride['id'] % 5) + 1 }}">{{ initials }}</div>
+
                   <div>
                     <div class="driver-name">{{ ride['driver_name'] }}</div>
                     <div class="driver-meta">Driver</div>
                   </div>
                 </div>
-                <div class="seats-badge">🪑 {{ ride['seats_available'] }} seats</div>
+
+                <div class="seats-badge">
+                  🪑 {{ ride['seats_available'] }} seats
+                </div>
+
               </div>
+
+
               <div class="route-section">
+
                 <div class="route-point">
                   <div class="route-label">From</div>
                   <div class="route-city">{{ ride['source'] }}</div>
                 </div>
+
                 <div class="route-arrow">
                   <div class="route-line"></div>
                   <span>→</span>
                 </div>
+
                 <div class="route-point" style="text-align:right">
                   <div class="route-label">To</div>
                   <div class="route-city">{{ ride['destination'] }}</div>
                 </div>
+
               </div>
+
+
               <div class="card-footer">
+
                 <div class="card-meta-items">
                   <div class="meta-item">📅 {{ ride['date'] }}</div>
                   <div class="meta-item">🕐 {{ ride['time'] }}</div>
                 </div>
-                <div class="view-btn">View →</div>
+
+                <div class="view-btn">
+                  View →
+                </div>
+
               </div>
+
             </a>
+
         {% endfor %}
+
     {% else %}
+
         <div class="empty-state" style="grid-column:1/-1">
           <div class="empty-icon">🔍</div>
           <h3>No rides found</h3>
           <p>Try a different route or check back later.</p>
         </div>
+
     {% endif %}
+
   </div>
+
 </div>
 {% endblock %}
