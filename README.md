@@ -8,13 +8,38 @@ A lightweight Car Pool Finder MVP built with Python/Flask, SQLite, and pristine 
   <img src="https://img.shields.io/badge/Vanilla_JS-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" />
 </div>
 
-## Features
-- **Deep Navy & Warm Amber UI**: A highly customized visual identity using Playfair Display and DM Sans.
-- **Dynamic Homepage**: Features a split From/To search bar with case-insensitive partial matching to filter active rides. Real-time statistics tracking active rides, connected cities, and shared seats.
-- **Driver Profiles**: Dynamic, color-coded driver avatar chips mapped natively to row indices.
-- **Seat Requests System**: Passengers can request a seat while adhering to unique duplicate-request constraints.
-- **Driver-Controlled Closures**: Rides can be safely manually marked complete/closed by the driver matching their original verification contact string.
-- **Animated Toast Notifications**: Real-time feedback securely driven by native Vanilla JS capturing Flask session flash messages.
+## Features & Demo
+
+### 1. Secure Authentication & Premium Login
+The app features a fully custom glassmorphism login and registration portal. It handles hashed passwords and session-based authentication completely natively.
+<br>
+<img src="file:///C:/Users/kmadh/.gemini/antigravity/brain/4ca01c87-f34a-4753-920c-f003409060ce/logout_login_page_1773488617533.png" width="800"/>
+
+### 2. Interactive Hero & Real-Time Search
+The dashboard welcomes users with a premium dark hero section showcasing animated SVG vehicles with exhaust trails. A unified search bar allows users to instantly filter active rides by origin and destination.
+<br>
+<img src="file:///C:/Users/kmadh/.gemini/antigravity/brain/4ca01c87-f34a-4753-920c-f003409060ce/hero_section_1773487641563.png" width="800"/>
+
+### 3. Responsive Ride Grid Layout
+Available rides are rendered in a clean, fully responsive css-grid (scaling up to 3 cards per row). Each card dynamically generates driver initials and maps them to a unique color palette, alongside route mapping and seat metrics.
+<br>
+<img src="file:///C:/Users/kmadh/.gemini/antigravity/brain/4ca01c87-f34a-4753-920c-f003409060ce/ride_cards_layout_1773487654203.png" width="800"/>
+
+### 4. Dedicated Ride Detail & Passenger Requests
+Clicking into a ride provides a dedicated full-page view mapping the entire journey. Passengers can submit a seat request with their contact details. The system prevents duplicate requests natively via SQLite unique constraints.
+<br>
+<img src="file:///C:/Users/kmadh/.gemini/antigravity/brain/4ca01c87-f34a-4753-920c-f003409060ce/ride_detail_page_1773488605416.png" width="800"/>
+
+### 5. Posting a New Ride & Driver Controls
+Drivers can seamlessly post new rides through a clean, 2-column interactive form specifying source, destination, seats, and a unique cancellation password.
+<br>
+<img src="file:///C:/Users/kmadh/.gemini/antigravity/brain/4ca01c87-f34a-4753-920c-f003409060ce/post_ride_page_1773488560588.png" width="800"/>
+
+### 6. Ride Management (Accept/Reject & Close)
+Drivers have an exclusive view to Accept or Reject pending requests from passengers securely. Additionally, rides can be safely manually marked complete/closed by the driver matching their original verification password string.
+
+### 7. Animated Toast Notifications
+Contextual real-time feedback (success, error, auth warnings) securely driven by native Vanilla JS capturing Flask session flash messages.
 
 ## Project Structure
 ```text

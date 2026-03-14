@@ -21,7 +21,7 @@ def init_db():
         )
     ''')
 
-    # Rides table — now linked to a user
+    # Rides table
     cursor.execute('''
         CREATE TABLE rides (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +40,7 @@ def init_db():
         )
     ''')
 
-    # Requests table — now has status and user_id
+    # Requests table
     cursor.execute('''
         CREATE TABLE requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,9 +56,40 @@ def init_db():
         )
     ''')
 
+    # ── Sample Users ──
+    users = [
+        ('srikumar', 'pass'),
+        ('rohit_reddy', 'pass'),
+        ('karthik', 'pass'),
+        ('sai_teja', 'pass'),
+        ('sashank', 'pass'),
+        ('sairam', 'pass'),
+    ]
+    for username, pwd in users:
+        cursor.execute(
+            'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+            (username, generate_password_hash(pwd))
+        )
+
+    # ── Sample Rides ──
+    rides = [
+        (1, 'Sri Kumar',   'Hyderabad',  'Bangalore',   '2026-03-20', '06:00', 3, '9876543210', 'cancel123'),
+        (2, 'Rohit Reddy', 'Hyderabad',  'Guntur',      '2026-03-20', '07:15', 2, '9988776655', 'cancel456'),
+        (3, 'Karthik',     'Hyderabad',  'Vijayawada',  '2026-03-20', '05:30', 3, '9112233445', 'cancel789'),
+        (4, 'Sai Teja',    'Hyderabad',  'Warangal',    '2026-03-21', '08:00', 4, '9001122334', 'cancel000'),
+        (5, 'Sashank',     'Hyderabad',  'Nellore',     '2026-03-21', '06:45', 3, '9223344556', 'cancel111'),
+        (6, 'Sairam',      'Rajahmundry','Mangalgiri',  '2026-03-22', '05:00', 2, '9334455667', 'cancel222'),
+    ]
+    for r in rides:
+        cursor.execute('''
+            INSERT INTO rides (user_id, driver_name, source, destination, date, time, seats_available, contact, cancel_password, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        ''', r)
+
     conn.commit()
     conn.close()
-    print("Database initialized successfully with the new schema.")
+    print("Database initialized with the new provided sample data!")
+    print("Users: srikumar, rohit_reddy, karthik, sai_teja, sashank, sairam (all password: 'pass')")
 
 if __name__ == '__main__':
     init_db()
