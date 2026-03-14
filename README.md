@@ -79,6 +79,8 @@ Clicking into a ride provides a dedicated full-page view mapping the entire jour
 <img src="docs/ride_detail.png" width="800"/>
 <br>
 <img src="docs/passenger_status.png" width="800"/>
+<br>
+<img src="docs/accepted_status.png" width="800"/>
 
 ### 5. Posting a New Ride & Driver Controls
 Drivers can seamlessly post new rides through a clean, 2-column interactive form specifying source, destination, seats, and a unique cancellation password.
