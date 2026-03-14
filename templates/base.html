@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RideShare — Car Pool Finder</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -17,6 +17,16 @@
     <div class="nav-links">
         <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Find a Ride</a>
         <a href="{{ url_for('post_ride') }}" class="nav-link {% if request.endpoint == 'post_ride' %}active{% endif %}">Post a Ride</a>
+
+        {% if current_user %}
+            <div class="nav-user">
+                <span class="nav-user-badge">👤 {{ current_user['username'] }}</span>
+                <a href="{{ url_for('logout') }}" class="nav-link nav-logout">Logout</a>
+            </div>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="nav-link {% if request.endpoint == 'login' %}active{% endif %}">Login</a>
+            <a href="{{ url_for('register') }}" class="nav-link nav-register {% if request.endpoint == 'register' %}active{% endif %}">Register</a>
+        {% endif %}
     </div>
 </nav>
 
@@ -55,7 +65,7 @@
                         if (msg.category === 'success') icon = '✅';
                         if (msg.category === 'error' || msg.category === 'danger') icon = '⚠️';
                         showToast(icon, msg.message);
-                    }, index * 400); // Stagger animations
+                    }, index * 400);
                 });
             } catch (e) {
                 console.error("Error parsing flash messages", e);

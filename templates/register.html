@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="auth-page">
+  <!-- Floating particles -->
+  <div class="particle particle-1"></div>
+  <div class="particle particle-2"></div>
+  <div class="particle particle-3"></div>
+  <div class="particle particle-4"></div>
+  <div class="particle particle-5"></div>
+  <div class="particle particle-6"></div>
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🚗</div>
+      <div class="auth-logo-text">Ride<span>Pool</span></div>
+    </div>
+
+    <h2 class="auth-title">Create Account</h2>
+    <p class="auth-subtitle">Join the community and start sharing rides</p>
+
+    <form action="{{ url_for('register') }}" method="post" class="auth-form">
+      <div class="auth-input-group">
+        <div class="auth-input-icon">👤</div>
+        <input type="text" name="username" id="reg-username" placeholder="Choose a username" required autocomplete="username" />
+        <label for="reg-username">Username</label>
+        <div class="auth-input-line"></div>
+      </div>
+
+      <div class="auth-input-group">
+        <div class="auth-input-icon">🔒</div>
+        <input type="password" name="password" id="reg-password" placeholder="Create a password" required minlength="4" autocomplete="new-password" />
+        <label for="reg-password">Password</label>
+        <div class="auth-input-line"></div>
+      </div>
+
+      <div class="auth-input-group">
+        <div class="auth-input-icon">🔐</div>
+        <input type="password" name="confirm_password" id="reg-confirm" placeholder="Confirm your password" required minlength="4" autocomplete="new-password" />
+        <label for="reg-confirm">Confirm Password</label>
+        <div class="auth-input-line"></div>
+      </div>
+
+      <button type="submit" class="auth-btn" id="register-submit-btn">
+        <span class="auth-btn-text">Create Account</span>
+        <span class="auth-btn-icon">→</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="{{ url_for('login') }}">Sign in</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

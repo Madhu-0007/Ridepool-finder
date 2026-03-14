@@ -76,7 +76,45 @@
         <div class="section-card-title">Request a Seat 🎟️</div>
       </div>
       <div class="section-card-body">
-        {% if ride['is_active'] %}
+        {% if my_request %}
+            <!-- Passenger already has a request — show status -->
+            <div class="my-request-status-card">
+              <div class="my-request-header">Your Seat Request</div>
+              <div class="my-request-details">
+                <div class="my-request-info">
+                  <div><strong>Name:</strong> {{ my_request.passenger_name }}</div>
+                  <div><strong>Contact:</strong> {{ my_request.passenger_contact }}</div>
+                </div>
+                <div class="my-request-badge-wrap">
+                  {% if my_request.status == 'accepted' %}
+                    <div class="my-request-status-badge my-req-accepted">
+                      <span class="my-req-icon">✅</span>
+                      <div>
+                        <div class="my-req-label">Accepted</div>
+                        <div class="my-req-hint">The driver accepted your request. Contact them for details!</div>
+                      </div>
+                    </div>
+                  {% elif my_request.status == 'rejected' %}
+                    <div class="my-request-status-badge my-req-rejected">
+                      <span class="my-req-icon">❌</span>
+                      <div>
+                        <div class="my-req-label">Rejected</div>
+                        <div class="my-req-hint">Unfortunately, the driver couldn't accommodate your request.</div>
+                      </div>
+                    </div>
+                  {% else %}
+                    <div class="my-request-status-badge my-req-pending">
+                      <span class="my-req-icon">⏳</span>
+                      <div>
+                        <div class="my-req-label">Pending</div>
+                        <div class="my-req-hint">Waiting for the driver to respond. Hang tight!</div>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+        {% elif ride['is_active'] and not is_owner %}
             <div class="privacy-notice">
             ℹ️ <span>Your request will only be visible to the driver. They will contact you if a seat is available.</span>
             </div>
@@ -84,7 +122,7 @@
                 <div class="form-grid" style="margin-bottom:1rem;">
                 <div class="form-group">
                     <label>Your Name <span style="color:var(--terra)">*</span></label>
-                    <input type="text" class="form-control" name="passenger_name" placeholder="Passenger name" required />
+                    <input type="text" class="form-control" name="passenger_name" value="{{ current_user['username'] if current_user else '' }}" placeholder="Passenger name" required />
                 </div>
                 <div class="form-group">
                     <label>Your Contact <span style="color:var(--terra)">*</span></label>
@@ -93,42 +131,120 @@
                 </div>
                 <button type="submit" class="submit-btn" style="width: auto; padding: 12px 24px;">Send Seat Request</button>
             </form>
-        {% else %}
+        {% elif not ride['is_active'] %}
             <div class="privacy-notice" style="background:#f1f5f9; border-color:#cbd5e1; color:#334155;">
                 🔒 <span>This ride is no longer active and is not accepting new requests.</span>
+            </div>
+        {% elif is_owner %}
+            <div class="privacy-notice" style="background:#EFF6FF; border-color:#BFDBFE; color:#1E40AF;">
+                ℹ️ <span>This is your ride. Passengers can request seats from this page.</span>
             </div>
         {% endif %}
       </div>
     </div>
 
-    <!-- Requests List (Driver Only) -->
+    <!-- Requests List -->
     <div class="section-card fade-up" style="animation-delay: 0.2s;">
       <div class="section-card-header">
-        <div class="section-card-title">🔒 Seat Requests (Driver Only)</div>
+        <div class="section-card-title">
+          {% if is_owner %}
+            📋 Seat Requests
+          {% else %}
+            🔒 Seat Requests (Driver Only)
+          {% endif %}
+        </div>
         <span class="status-badge active">{{ request_count }} request{{ 's' if request_count != 1 }}</span>
       </div>
       <div class="section-card-body">
-        <div class="privacy-notice" style="background:#EFF6FF; border-color:#BFDBFE; color:#1E40AF;">
-          🛡️ <span>Requests are private. Only the driver can view them by entering their cancel password.</span>
-        </div>
 
-        <div id="requests-locked">
-          <form id="view-requests-form" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-            <input type="password" id="view-requests-pwd" required placeholder="Enter your cancel password..." style="flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:10px; font-size:0.88rem; font-family:inherit; background:var(--cream); transition: border-color 0.2s;">
-            <button type="submit" class="submit-btn" style="width:auto; padding:10px 20px; margin-top:0;">🔓 View Requests</button>
-          </form>
-          <div id="view-requests-error" style="display:none; color:#DC2626; font-size:0.82rem; margin-top:8px; font-weight:500;">⚠️ Incorrect password. Please try again.</div>
-        </div>
+        {% if is_owner %}
+          <!-- Owner view: show requests directly with accept/reject -->
+          <div class="privacy-notice" style="background:#F0FDF4; border-color:#BBF7D0; color:#16A34A;">
+            ✅ <span>You are the driver. Manage your requests below.</span>
+          </div>
 
-        <div id="requests-unlocked" style="display:none; padding:0;">
-          <div id="requests-list"></div>
-        </div>
+          <div id="owner-requests-list">
+            {% if requests_list %}
+              {% for req in requests_list %}
+                <div class="request-item fade-up" id="request-item-{{ req.id }}" data-status="{{ req.status }}">
+                  {% set parts = req.passenger_name.split(' ') %}
+                  {% set initial = (parts[0][0] ~ (parts[1][0] if parts|length > 1 else '')) | upper %}
+                  <div class="req-avatar">{{ initial }}</div>
+                  <div class="req-info">
+                    <div class="req-name">{{ req.passenger_name }}</div>
+                    <div class="req-contact">{{ req.passenger_contact }}</div>
+                  </div>
+                  <div class="req-actions" id="req-actions-{{ req.id }}">
+                    {% if req.status == 'pending' %}
+                      <button class="req-accept-btn" onclick="handleRequest({{ ride['id'] }}, {{ req.id }}, 'accept')" title="Accept">✅ Accept</button>
+                      <button class="req-reject-btn" onclick="handleRequest({{ ride['id'] }}, {{ req.id }}, 'reject')" title="Reject">❌ Reject</button>
+                    {% elif req.status == 'accepted' %}
+                      <span class="req-status-badge accepted">✅ Accepted</span>
+                    {% elif req.status == 'rejected' %}
+                      <span class="req-status-badge rejected">❌ Rejected</span>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div style="text-align:center; padding:1.5rem; color:var(--muted); font-size:0.9rem;">
+                No requests yet. Share the link so passengers can find your ride!
+              </div>
+            {% endif %}
+          </div>
+
+        {% else %}
+          <!-- Non-owner view: password-based -->
+          <div class="privacy-notice" style="background:#EFF6FF; border-color:#BFDBFE; color:#1E40AF;">
+            🛡️ <span>Requests are private. Only the driver can view them by entering their cancel password.</span>
+          </div>
+
+          <div id="requests-locked">
+            <form id="view-requests-form" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <input type="password" id="view-requests-pwd" required placeholder="Enter your cancel password..." style="flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:10px; font-size:0.88rem; font-family:inherit; background:var(--cream); transition: border-color 0.2s;">
+              <button type="submit" class="submit-btn" style="width:auto; padding:10px 20px; margin-top:0;">🔓 View Requests</button>
+            </form>
+            <div id="view-requests-error" style="display:none; color:#DC2626; font-size:0.82rem; margin-top:8px; font-weight:500;">⚠️ Incorrect password. Please try again.</div>
+          </div>
+
+          <div id="requests-unlocked" style="display:none; padding:0;">
+            <div id="requests-list"></div>
+          </div>
+        {% endif %}
+
       </div>
     </div>
 
 </div>
 
 <script>
+{% if is_owner %}
+// Accept / Reject handler (AJAX)
+async function handleRequest(rideId, reqId, action) {
+    const url = `/ride/${rideId}/${action}-request/${reqId}`;
+    try {
+        const res = await fetch(url, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            const actionsEl = document.getElementById(`req-actions-${reqId}`);
+            const itemEl = document.getElementById(`request-item-${reqId}`);
+            if (data.status === 'accepted') {
+                actionsEl.innerHTML = '<span class="req-status-badge accepted">✅ Accepted</span>';
+                itemEl.setAttribute('data-status', 'accepted');
+            } else if (data.status === 'rejected') {
+                actionsEl.innerHTML = '<span class="req-status-badge rejected">❌ Rejected</span>';
+                itemEl.setAttribute('data-status', 'rejected');
+            }
+            // Animate
+            itemEl.style.transform = 'scale(0.97)';
+            setTimeout(() => { itemEl.style.transform = 'scale(1)'; }, 200);
+        }
+    } catch (err) {
+        console.error('Error:', err);
+    }
+}
+{% else %}
+// Password-based view requests (for non-owners)
 document.getElementById('view-requests-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     const pwd = document.getElementById('view-requests-pwd').value;
@@ -159,12 +275,18 @@ document.getElementById('view-requests-form').addEventListener('submit', async f
                 listEl.innerHTML = data.requests.map(req => {
                     const parts = req.passenger_name.split(' ');
                     const initial = (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+                    const statusBadge = req.status === 'accepted'
+                        ? '<span class="req-status-badge accepted">✅ Accepted</span>'
+                        : req.status === 'rejected'
+                        ? '<span class="req-status-badge rejected">❌ Rejected</span>'
+                        : '<span class="req-status-badge pending">⏳ Pending</span>';
                     return `<div class="request-item fade-up">
                         <div class="req-avatar">${initial}</div>
                         <div class="req-info">
                             <div class="req-name">${req.passenger_name}</div>
                             <div class="req-contact">${req.passenger_contact}</div>
                         </div>
+                        <div class="req-actions">${statusBadge}</div>
                     </div>`;
                 }).join('');
             }
@@ -176,5 +298,6 @@ document.getElementById('view-requests-form').addEventListener('submit', async f
         errorEl.style.display = 'block';
     }
 });
+{% endif %}
 </script>
 {% endblock %}
