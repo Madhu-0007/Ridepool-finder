@@ -323,6 +323,30 @@ nav {
   100% { right: 100%; }
 }
 
+/* New Animation Variants */
+@keyframes carDriveReverse {
+  0% { right: -150px; }
+  100% { right: 100%; }
+}
+
+@keyframes driveFast {
+  0% { left: -200px; }
+  100% { left: 100%; }
+}
+
+@keyframes driveSlow {
+  0% { left: -150px; }
+  100% { left: 100%; }
+}
+
+.moving-car.fast { animation-duration: 8s; }
+.moving-car.slow { animation-duration: 20s; }
+.moving-bike.fast { animation-duration: 10s; }
+.moving-scooty.slow { animation-duration: 25s; }
+
+.reverse { transform: scaleX(-1); }
+.reverse .car-svg, .reverse .bike-svg, .reverse .scooty-svg { animation-name: carDriveReverse; }
+
 /* ── QUOTES SECTION ── */
 .quotes-section {
   padding: 4rem 2rem;
